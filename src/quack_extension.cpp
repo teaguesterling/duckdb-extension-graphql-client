@@ -3,6 +3,7 @@
 #include "quack_extension.hpp"
 #include "duckdb.hpp"
 #include "duckdb/common/exception.hpp"
+#include "duckdb/catalog/catalog.hpp"
 #include "duckdb/common/string_util.hpp"
 #include "duckdb/function/scalar_function.hpp"
 #include "duckdb/main/extension_util.hpp"
@@ -34,6 +35,11 @@ inline void QuackOpenSSLVersionScalarFun(DataChunk &args, ExpressionState &state
 }
 
 static void LoadInternal(DatabaseInstance &instance) {
+    // (For now) require the http client 
+    if (!Catalog::TryAutoLoad(context, "http_client")) {
+        throw MissingExtensionException("http_client extension is required for graphql_client");
+    }
+
     // Register a scalar function
     auto quack_scalar_function = ScalarFunction("quack", {LogicalType::VARCHAR}, LogicalType::VARCHAR, QuackScalarFun);
     ExtensionUtil::RegisterFunction(instance, quack_scalar_function);
